@@ -16,6 +16,7 @@ export const getNotifications = async (req, res) => {
   }
 };
 
+
 export const deleteNotifications = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -26,3 +27,4 @@ export const deleteNotifications = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
