@@ -29,8 +29,8 @@ export const createPost = async (req, res) => {
     await newPost.save();
     res.status(201).json(newPost);
   } catch (error) {
-    res.status(500).json({ error: "internal server error" });
-    console.log("Error in create post Controller", error);
+    res.status(500).json({ error: error.message });
+    console.error("Error in create post Controller", error);
   }
 };
 
@@ -218,7 +218,3 @@ export const getUserPosts = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-
-
-
