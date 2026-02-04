@@ -23,7 +23,7 @@ const Sidebar = () => {
         });
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.error) || "Something went wrong";
+          throw new Error(data.error || "Something went wrong");
         }
       } catch (error) {
         throw new Error(error);
@@ -34,7 +34,14 @@ const Sidebar = () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
   });
-  const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+  const { data: authUser } = useQuery({
+    queryKey: ["authUser"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) throw new Error("Not authenticated");
+      return res.json();
+    },
+  });
 
   return (
     <div className="md:flex-[2_2_0] w-18 max-w-52">
