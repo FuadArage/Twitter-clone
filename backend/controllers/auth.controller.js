@@ -11,7 +11,7 @@ export const signup = async (req, res) => {
     email = email?.trim().toLowerCase();
 
     if (!fullname || !username || !email || !password) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({ error: "All fields are required11" });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -22,18 +22,18 @@ export const signup = async (req, res) => {
 
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
-      return res.status(400).json({ error: "email is already taken" });
+      return res.status(400).json({ error: "Email is already taken" });
     }
 
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      return res.status(400).json({ error: "username is already taken" });
+      return res.status(400).json({ error: "Username is already taken" });
     }
 
     if (password.length < 6) {
       return res
         .status(400)
-        .json({ error: "password must be at least 6 characters long" });
+        .json({ error: "Password must be at least 6 characters long" });
     }
 
     //hash passwoed
