@@ -13,12 +13,11 @@ const postSchema = new mongoose.Schema(
     img: {
       type: String,
     },
-    likes: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
+    likes: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: [],
+    },
     comments: [
       {
         text: {
@@ -36,5 +35,5 @@ const postSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const post = mongoose.model("post", postSchema);
-export default post;
+const Post = mongoose.model("Post", postSchema);
+export default Post;
