@@ -21,7 +21,7 @@ export const createPost = async (req, res) => {
       const uploadedResponse = await cloudinary.uploader.upload(img);
       img = uploadedResponse.secure_url;
     }
-    const newPost = new post({
+    const newPost = new Post({
       user: userId,
       text,
       img,
@@ -37,7 +37,7 @@ export const createPost = async (req, res) => {
 
 export const deletePost = async (req, res) => {
   try {
-    const Post = await post.findById(req.params.id);
+    const Post = await Post.findById(req.params.id);
 
     if (!Post) {
       return res.status(404).json({ error: "post not found" });
@@ -54,7 +54,7 @@ export const deletePost = async (req, res) => {
       await cloudinary.uploader.destroy(imgId);
     }
 
-    await post.findByIdAndDelete(req.params.id);
+    await Post.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "post deleted  successfully" });
   } catch (error) {
     console.log("error  in deletepost controller", error);
@@ -72,7 +72,7 @@ export const commentOnPost = async (req, res) => {
       return res.status(400).json({ error: "Text field is required" });
     }
 
-    const post = await post.findById(postId);
+    const post = await Post.findById(postId);
 
     if (!post) {
       return res.status(400).json({ error: "Text field is required" });
@@ -97,7 +97,7 @@ export const likeUnlikePost = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    const hasLiked = post.likes.includes(userId);
+    const hasLiked = Post.likes.includes(userId);
 
     // UNLIKE
     if (hasLiked) {
