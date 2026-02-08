@@ -9,35 +9,27 @@ import { toast } from "react-hot-toast";
 const NotificationPage = () => {
   const queryClient = useQueryClient();
   const { data: notifications, isLoading } = useQuery({
-    QueryKey: ["notifications"],
+    queryKey: ["notifications"],
     queryFn: async () => {
-      try {
-        const res = await fetch("/api/notifications");
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Something went wrong");
-        return data;
-      } catch (error) {
-        throw new Error(error);
-      }
+      const res = await fetch("/api/notifications");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
     },
   });
 
   const { mutate: deleteNotification } = useMutation({
     mutationFn: async () => {
-      try {
-        const res = await fetch("api/notifications", {
-          method: "DELETE",
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Something went wrong");
-        return data;
-      } catch (error) {
-        throw new Error(error);
-      }
-    },
+      const res = await fetch("/api/notifications", {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
+    }, 
     onSuccess: () => {
       toast.success("Notification deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries(["notifications"]);
     },
     onError: (error) => {
       toast.error(error.message);
