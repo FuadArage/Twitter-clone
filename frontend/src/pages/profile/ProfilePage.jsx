@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import Posts from "../../components/common/Posts";
@@ -8,9 +8,10 @@ import EditProfileModal from "./EditProfileModal";
 import { FaArrowLeft, FaLink } from "react-icons/fa";
 import { IoCalendarOutline } from "react-icons/io5";
 import { MdEdit } from "react-icons/md";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatMemberSinceDate, formatPostDate } from "../../utils/db/date";
-
+import useFollow from "../../hooks/useFollow";
+import toast from "react-hot-toast";
 const ProfilePage = () => {
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
@@ -18,33 +19,82 @@ const ProfilePage = () => {
 
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
-
+  const queryClient = useQueryClient();
   // Strip @ if URL has it
-  const { username: rawUsername } = useParams();
-  const username= rawUsername.startsWith("@")
-    ? rawUsername.slice(1)
-    : rawUsername;
+  // const { username: rawUsername } = useParams();
+  // const username = rawUsername.startsWith("@")
+  //   ? rawUsername.slice(1)
+  //   : rawUsername;
 
-// const {username} = useParams()
-
+  const { username } = useParams();
+  const { follow, isPending } = useFollow();
+  const { data: authUser } = useQuery({ queryKey: ["authUser"] });
   // TODO: replace with actual logged-in user from context/auth
-  const authUser = { username: "fuad_arage" };
-  const isMyProfile = authUser?.username === username;
+  // const authUser = { username: "fuad_arage" };
   // Fetch user profile
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["userProfile", username],
+
+  // const { follow, isPending } = useFollow();
+  const {
+    data: user,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ["userProfile"],
     queryFn: async () => {
-      const res = await fetch(`/api/users/profile/${username}`);
-      const data = await res.json();
-      console.log("USER FROM API 👉", data);
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-      return data;
+      try {
+        const res = await fetch(`/api/users/profile/${username}`);
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Something went wrong");
+        }
+        return data;
+      } catch (error) {
+        throw new Error(error);
+      }
     },
   });
-  const memberSinceDate = user?.createdAt
-    ? formatMemberSinceDate(user.createdAt)
-    : "";
 
+  const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch("/api/users/update", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            coverImg,
+            profileImg,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Something went wrong");
+        }
+        return data;
+      } catch (error) {
+        throw new Error(error.message);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Profile Updated Successfully");
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["authUser"] }),
+        queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
+      ]);
+    },
+  });
+  // const memberSinceDate = user?.createdAt
+  //   ? formatMemberSinceDate(user.createdAt)
+  //   : "";
+  const isMyProfile = authUser?.username === username;
+
+  const memberSinceDate = formatMemberSinceDate(user?.createdAt);
+
+  // const amIfollowing = user?.followers.includes(authUser._id);
+  const amIfollowing = authUser?.following?.includes(user?._id);
   const handleImgChange = (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -55,7 +105,9 @@ const ProfilePage = () => {
     };
     reader.readAsDataURL(file);
   };
-
+  useEffect(() => {
+    refetch();
+  }, [username, refetch]);
   return (
     <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
       {/* HEADER */}
@@ -135,16 +187,21 @@ const ProfilePage = () => {
           <div className="flex justify-end px-4 mt-5">
             {isMyProfile && <EditProfileModal />}
             {!isMyProfile && (
-              <button className="btn btn-outline rounded-full btn-sm">
-                Follow
+              <button
+                className="btn btn-outline rounded-full btn-sm"
+                onClick={() => follow(user?._id)}
+              >
+                {isPending && "Loading..."}
+                {!isPending && amIfollowing && "Unfollow"}
+                {!isPending && !amIfollowing && "Follow"}
               </button>
             )}
             {(coverImg || profileImg) && (
               <button
                 className="btn btn-primary rounded-full btn-sm text-white px-4 ml-2"
-                onClick={() => alert("Profile updated successfully")}
+                onClick={(e) => updateProfile()}
               >
-                Update
+                {isUpdatingProfile ? "Updating" : "Update"}
               </button>
             )}
           </div>
