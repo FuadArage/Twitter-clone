@@ -31,7 +31,7 @@ const Sidebar = () => {
     },
     onSuccess: () => {
       toast.success("Logged Out Successful");
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      queryClient.setQueryData(["authUser"], null);
     },
   });
   const { data: authUser } = useQuery({
@@ -111,4 +111,3 @@ const Sidebar = () => {
   );
 };
 export default Sidebar;
-
